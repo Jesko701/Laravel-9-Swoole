@@ -1,3 +1,4 @@
+
 # Laravel 9 with Swoole and MySQL using Docker
 
 This guide walks you through setting up a **Laravel 9** application integrated with **Swoole** for high-performance HTTP handling and **MySQL**, all running inside **Docker** containers.
@@ -15,7 +16,8 @@ This guide walks you through setting up a **Laravel 9** application integrated w
 5. [Environment Configuration](#5-environment-configuration)  
 6. [Build & Run the Application](#6-build--run-the-application)  
 7. [Access the Application](#7-access-the-application)  
-8. [Troubleshooting](#8-troubleshooting)
+8. [Important: Update Laravel Rate Limiter Configuration](#8-important-update-laravel-rate-limiter-configuration)  
+9. [Troubleshooting](#9-troubleshooting)
 
 ---
 
@@ -201,7 +203,32 @@ docker-compose logs -f db
 
 ---
 
-## 8. Troubleshooting
+## 8. Important: Update Laravel Rate Limiter Configuration
+
+When using Laravel with Swoole and serving many concurrent requests, it’s important to properly configure the rate limiter to prevent unwanted throttling or abuse.
+
+Please update the `configureRateLimiting()` method in `app/Providers/RouteServiceProvider.php` as follows:
+
+```php
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
+
+protected function configureRateLimiting()
+{
+    RateLimiter::for('api', function (Request $request) {
+        return Limit::perMinute(60)->by(optional($request->user())->id ?: $request->ip());
+    });
+}
+```
+
+This setup limits API requests to 60 per minute per authenticated user or by IP address for guests. Adjust these values to fit your application’s needs.
+
+> 💡 Proper rate limiting helps maintain performance and protects your application from abuse when handling high traffic with Swoole.
+
+---
+
+## 9. Troubleshooting
 
 ### ❌ _This page isn’t working_ / No response
 

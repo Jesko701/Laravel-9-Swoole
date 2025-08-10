@@ -1,67 +1,42 @@
-version: '3.8'
-
 services:
   app:
-    # Build the Docker image using the Dockerfile in the current directory
     build:
       context: .
       dockerfile: Dockerfile
-    # Map port 9501 from the host to port 9501 in the container
+    container_name: laravel_swoole_app
     ports:
       - "9501:9501"
-    # Mount the current project directory into the container's working directory
-    # This allows for live code changes without rebuilding the image
     volumes:
       - .:/var/www/html
-    # Restart the container automatically unless it's explicitly stopped
     restart: unless-stopped
-    # Ensure the 'db' service is started before the 'app' service
     depends_on:
       - db
-    # Define environment variables for the Laravel application
-    # These will override or complement variables in the .env file
     environment:
       APP_ENV: local
       APP_DEBUG: "true"
-      # Database connection details for the MySQL container
+      APP_KEY: "base64:3NR6+mmzeu9P51HwfKPi275jYW1zLPdIq9+9miZAQTk="
       DB_CONNECTION: mysql
-      DB_HOST: db # This refers to the 'db' service name in docker-compose
+      DB_HOST: db
       DB_PORT: 3306
-      DB_DATABASE: laravel # Match this with MYSQL_DATABASE in the db service
-      DB_USERNAME: laravel_user # Match this with MYSQL_USER in the db service
-      DB_PASSWORD: password # Match this with MYSQL_PASSWORD in the db service
-      # Swoole specific environment variables, which the package reads automatically
+      DB_DATABASE: laravel
+      DB_USERNAME: laravel_user
+      DB_PASSWORD: password
       SWOOLE_HTTP_HOST: 0.0.0.0
       SWOOLE_HTTP_PORT: 9501
-    # Command to run when the container starts (overrides Dockerfile CMD if specified here)
-    # This will start the Swoole HTTP server for Laravel
-    command: php artisan swoole:http start
 
   db:
-    # Use the official MySQL 8.0 Docker image
     image: mysql:8.0
-    # Map port 3306 from the host to port 3306 in the container (optional, for direct host access)
+    container_name: laravel_swoole_db
     ports:
       - "3306:3306"
-    # Define environment variables for MySQL configuration
     environment:
-      MYSQL_ROOT_PASSWORD: root_password # Set a strong root password
-      MYSQL_DATABASE: laravel # The database Laravel will connect to
-      MYSQL_USER: laravel_user # The user Laravel will use
-      MYSQL_PASSWORD: password # The password for the Laravel user
-      MYSQL_ALLOW_EMPTY_PASSWORD: "no" # Do not allow empty password for root
-    # Persist database data to a named volume
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: laravel
+      MYSQL_USER: laravel_user
+      MYSQL_PASSWORD: password
     volumes:
       - db_data:/var/lib/mysql
-    # Restart the container automatically unless it's explicitly stopped
     restart: unless-stopped
-    # Set a custom healthcheck to ensure MySQL is ready before the app connects
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u$$MYSQL_USER", "-p$$MYSQL_PASSWORD"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
-# Define named volumes for persistent data storage
 volumes:
   db_data:

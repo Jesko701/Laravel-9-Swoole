@@ -14,6 +14,24 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+// Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+//     return $request->user();
+// });
+
+Route::get('/getData', function () {
+    // Path to your JSON file (adjust if needed)
+    $path = storage_path('app/users_orders.json');
+
+    if (!file_exists($path)) {
+        return response()->json(['error' => 'Data file not found'], 404);
+    } 
+
+    // Read the file contents
+    $json = file_get_contents($path);
+
+    // Decode JSON to PHP array (optional)
+    $data = json_decode($json, true);
+
+    // Return as JSON response
+    return response()->json($data);
 });
